@@ -3,6 +3,6 @@ CUDA
 
 Labs for EECS468@Northwestern U
 
-Author
+Authors
 ----------------------------------
 Jian Shao, Peng Meng
