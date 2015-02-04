@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include "matrixmul.h"
 
+#define BLOCK_SIZE 16
 ////////////////////////////////////////////////////////////////////////////////
 //! Simple test kernel for device functionality
 //! @param g_idata  input data in global memory
@@ -51,7 +52,61 @@
 // Matrix multiplication kernel thread specification
 __global__ void MatrixMulKernel(Matrix M, Matrix N, Matrix P)
 {
+  int b_row = blockIdx.y;
+  int b_col = blockIdx.x;
 
+
+  //Get sub-matrix
+  Matrix sub_P;
+  sub_P.width = BLOCK_SIZE;
+  sub_P.height = BLOCK_SIZE;
+  sub_P.pitch = P.pitch;
+  sub_P.elements = &P.elements[P.pitch*BLOCK_SIZE*b_row+BLOCK_SIZE*b_col];
+
+  //accmluate for this sub matrix
+  float sum_sub_P = 0.0;
+
+  int thread_row = threadIdx.y;
+  int thread_col = threadIdx.x;
+
+  Matrix sub_M;
+  Matrix sub_N;
+
+  sub_M.width = M.width;
+  sub_M.height = M.height;
+  sub_M.pitch = M.pitch;
+
+  sub_N.width = N.width;
+  sub_N.height = N.height;
+  sub_N.pitch = N.pitch;
+
+
+  for(int m = 0;m<(M.width/BLOCK_SIZE);++m)
+  {
+    //Get sub M
+    sub_M.elements = &M.elements[M.pitch*BLOCK_SIZE*b_row+BLOCK_SIZE*m];
+    //Get sub N
+    sub_N.elements = &N.elements[N.pitch*BLOCK_SIZE*m+BLOCK_SIZE*b_col];
+
+    //Read data to shared memory
+    __shared__ float sub_M_shared[BLOCK_SIZE][BLOCK_SIZE];
+    __shared__ float sub_N_shared[BLOCK_SIZE][BLOCK_SIZE];
+
+    sub_M_shared[thread_row][thread_col] = M.elements[thread_row*M.pitch+thread_col];
+    sub_N_shared[thread_row][thread_col] = N.elements[thread_row*M.pitch+thread_col];
+
+    __syncthreads(); //make sure data are loaded
+
+    for(int i = 0;i<BLOCK_SIZE;++i)
+    {
+      sum_sub_P += sub_M_shared[thread_row][i]*sub_N_shared[i][thread_col];
+    }
+
+    __syncthreads();//wait for computing is finished
+
+    //write back result
+    sub_P.elements[thread_row*sub_P.pitch+thread_col] = sum_sub_P;
+  }
 
 }
 
