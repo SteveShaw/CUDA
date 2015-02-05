@@ -5,4 +5,4 @@ Labs for EECS468@Northwestern U
 
 Authors
 ----------------------------------
-Jian Shao, Peng Meng
+Jian Shao, Peng Meng, Akhil Guliani
