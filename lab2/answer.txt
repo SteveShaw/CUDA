@@ -1,8 +1,4 @@
-ptxos info    : 0 bytes gmem
-ptxas info    : Compiling entry function '_Z15MatrixMulKernel6MatrixS_S_' for 'sm_30'
-ptxas info    : Function properties for _Z15MatrixMulKernel6MatrixS_S_
-    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
-ptxas info    : Used 29 registers, 2048 bytes smem, 392 bytes cmem[0]
-/usr/lib/gcc/x86_64-redhat-linux/4.4.7/../../../../lib64/crt1.o: In function `_start':
-(.text+0x20): undefined reference to `main'
-collect2: ld returned 1 exit statusbj/
+In our implementation, block size is 16x16,
+so that one block contains 256 threads. For GTX 680, one SM could hold 8 kinds of this block size.
+
+Answer:  There can be 256x8x8=16384 threads
