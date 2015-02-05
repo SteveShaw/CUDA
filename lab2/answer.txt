@@ -1,4 +1,2 @@
-In our implementation, block size is 16x16,
-so that one block contains 256 threads. For GTX 680, one SM could hold 8 kinds of this block size.
-
+In our implementation, block size is 16x16, so that one block contains 256 threads. For GTX 680, one SM could hold 8 kinds of this block size.
 Answer:  There can be 256x8x8=16384 threads
