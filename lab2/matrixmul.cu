@@ -155,7 +155,7 @@ void MatrixMulOnDevice(const Matrix M, const Matrix N, Matrix P)
 	// Setup the execution configuration
 
     dim3 block(BLOCK_SIZE,BLOCK_SIZE);
-    dim3 grid(N.width / block.x, M.height / block.y);
+    dim3 grid((N.width+block.x-1) / block.x, (M.height+block.y-1) / block.y);
 
 	// Launch the device computation threads!
     MatrixMulKernel<<<grid,block>>>(Md,Nd,Pd);
