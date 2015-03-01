@@ -1,9 +1,10 @@
 #ifndef OPT_KERNEL
 #define OPT_KERNEL
 
-void opt_2dhisto( /*Define your own function parameters*/ );
-
-/* Include below the function headers of any other functions that you implement */
+void opt_init(unsigned int** h_Data, int width, int height);
+void opt_2dhisto(int size);
+void opt_copyFromDevice(unsigned int* h_Histogoram);
+void opt_free();
 
 
 #endif

@@ -89,6 +89,8 @@ int main(int argc, char* argv[])
 
     /* Include your setup code below (temp variables, function calls, etc.) */
 
+	uint32_t* gpu_bins = (uint32_t*)malloc(HISTO_HEIGHT*HISTO_WIDTH*sizeof(uint32_t));
+	opt_init(input,INPUT_WIDTH,INPUT_HEIGHT);
 
 
     /* End of setup code */
@@ -96,12 +98,17 @@ int main(int argc, char* argv[])
     /* This is the call you will use to time your parallel implementation */
     TIME_IT("opt_2dhisto",
             1000,
-            opt_2dhisto( /*Define your own function parameters*/ );)
+            opt_2dhisto( INPUT_WIDTH*INPUT_HEIGHT );;)
 
     /* Include your teardown code below (temporary variables, function calls, etc.) */
 
-
-
+	opt_copyFromDevice(gpu_bins);
+	opt_free();
+	for (int i=0; i < HISTO_HEIGHT*HISTO_WIDTH; i++)
+	{
+		if(gpu_bins[i]>255) kernel_bins[i]=255;
+		else kernel_bins[i] = gpu_bins[i];
+	}
     /* End of teardown code */
 
     int passed=1;
