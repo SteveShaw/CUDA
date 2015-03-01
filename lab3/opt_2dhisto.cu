@@ -221,6 +221,8 @@ extern "C" void opt_2dhisto(int size)
   test_xform xform;
   test_sumfun sum;
   callHistogramKernel<histogram_atomic_inc, 1>(d_Data, xform, sum, 0, size, 0U, d_Histogram, HISTO_HEIGHT * HISTO_WIDTH, true);
+  cudaDeviceSynchronize();
+    
 }
 
 extern "C" void opt_free()
