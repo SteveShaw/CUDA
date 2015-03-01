@@ -5,7 +5,6 @@
 #include "util.h"
 #include "ref_2dhisto.h"
 
-
 #define H_ERROR_CHECKS      0
 
 #if H_ERROR_CHECKS
@@ -64,8 +63,10 @@ const int numActiveUpperLimit = 24;
 #define MAX_SMALL_STEPS         2040
 
 static unsigned int* d_Data = NULL;
-static unsigned int* d_Histogram = NULL;
+ static unsigned int* d_Histogram = NULL;
+//static unsigned char* d_Histogram = NULL;
 static unsigned int* h_Histogram = NULL;
+//static unsigned char* h_Histogram = NULL;
 
 
 #if __CUDA_ARCH__ >= 120
@@ -160,19 +161,33 @@ callHistogramKernel2Dim(
     bool allowMultiPass = true);
 
 
-struct test_xform {
-  __host__ __device__ void operator() (unsigned int* input, int i, int* res_idx, unsigned int* res, int nres) const {
-    *res_idx++ = input[i];
-    *res++ = 1;
-  }
-};
+ struct test_xform {
+   __host__ __device__ void operator() (unsigned int* input, int i, int* res_idx, unsigned int* res, int nres) const {
+     *res_idx++ = input[i];
+     *res++ = 1;
+   }
+ };
+
+//struct test_xform {
+//  __host__ __device__ void operator() (unsigned int* input, int i, int* res_idx, unsigned char* res, int nres) const {
+//    *res_idx++ = input[i];
+//    *res++ = 1;
+//  }
+//};
 
 // Sum-functor to be used for reduction - just a normal sum of two integers
-struct test_sumfun {
-  __device__ __host__ unsigned int operator() (unsigned int res1, unsigned int res2) const{
-    return res1 + res2;
-  }
-};
+ struct test_sumfun {
+   __device__ __host__ unsigned int operator() (unsigned int res1, unsigned int res2) const{
+     return res1 + res2;
+   }
+ };
+//struct test_sumfun {
+//  __device__ __host__ unsigned char operator() (unsigned char res1, unsigned char res2) const{
+//	unsigned int sum = (unsigned int)res1+(unsigned int)res2;
+//	if(sum>255) return 255;
+//    return res1 + res2;
+//  }
+//};
 
 __global__ void computeHistogram(unsigned int  *buffer, int size, unsigned int *histo )
 {
@@ -201,8 +216,7 @@ __global__ void computeHistogram(unsigned int  *buffer, int size, unsigned int *
 
 }
 
-//extern "C"
-void opt_init(unsigned int** h_Data, int width, int height)
+extern "C" void opt_init(unsigned int** h_Data, int width, int height)
 {
   cudaMalloc((void **)&d_Histogram, HISTO_HEIGHT * HISTO_WIDTH * sizeof(unsigned int));
   cudaMemset( d_Histogram, 0,HISTO_HEIGHT * HISTO_WIDTH * sizeof( unsigned int ));
@@ -220,31 +234,32 @@ void opt_init(unsigned int** h_Data, int width, int height)
 }
 
 
-//extern "C"
-void opt_2dhisto(int size)
+extern "C" void opt_2dhisto(int size)
 {
 
   test_xform xform;
   test_sumfun sum;
-  callHistogramKernel<histogram_atomic_add, 1>(d_Data, xform, sum, 0, size, 0U, d_Histogram, HISTO_HEIGHT * HISTO_WIDTH, true);
+  //unsigned char zero = 0x00;
+  callHistogramKernel<histogram_atomic_inc, 1>(d_Data, xform, sum, 0, size, 0U, &d_Histogram[0], HISTO_HEIGHT * HISTO_WIDTH, true);
   h_Histogram = new unsigned int[HISTO_HEIGHT * HISTO_WIDTH];
   cudaMemcpy(h_Histogram, d_Histogram, HISTO_HEIGHT * HISTO_WIDTH * sizeof(unsigned int), cudaMemcpyDeviceToHost);
 }
 
-//extern "C"
-void opt_free()
+extern "C" void opt_free()
 {
   cudaFree(d_Histogram);
   cudaFree(d_Data);
 }
 
-//extern "C"
-void opt_copyFromDevice(unsigned char* output)
+extern "C" void opt_copyFromDevice(unsigned char* output)
 {
-  for(int i = 0;i<HISTO_HEIGHT * HISTO_WIDTH;++i)
-  {
-    output[i] = h_Histogram[i]>255?255:h_Histogram[i];
-  }
+   for(int i = 0;i<HISTO_HEIGHT * HISTO_WIDTH;++i)
+   {
+     int value = h_Histogram[i]/1000;
+     output[i] = value>255?255:value;
+   }
+  
+//  memcpy(output,h_Histogram,sizeof(unsigned char)*HISTO_HEIGHT*HISTO_WIDTH);
 
   delete[] h_Histogram;
 }
@@ -3816,5 +3831,11 @@ int getHistogramBufSize(OUTPUTTYPE zero, int nOut)
 #undef MEDIUM_BLOCK_SIZE
 #endif
 #undef USE_MEDIUM_PATH
+
+
+
+
+
+
 
 

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
-#include <fstream>
+// #include <fstream>
 
 #include <cuda.h>
 #include <cutil.h>
@@ -102,8 +102,10 @@ int main(int argc, char* argv[])
 
     /* Include your teardown code below (temporary variables, function calls, etc.) */
 
-	opt_copyFromDevice(kernel_bins);
 	opt_free();
+	
+	opt_copyFromDevice(kernel_bins);
+	
 
     /* End of teardown code */
 
@@ -117,15 +119,15 @@ int main(int argc, char* argv[])
     (passed) ? printf("\n    Test PASSED\n") : printf("\n    Test FAILED\n");
 	
 	
-	  std::ofstream ofs;
-  ofs.open ("output.txt", std::ofstream::out);
+	  // std::ofstream ofs;
+  // ofs.open ("output.txt", std::ofstream::out);
 
-  for (int i=0; i < HISTO_HEIGHT*HISTO_WIDTH; i++)
-  {
-    ofs<<"gold "<<(uint32_t)gold_bins[i]<<";    kernel "<<(uint32_t)kernel_bins[i]<<std::endl;
-  }
+  // for (int i=0; i < HISTO_HEIGHT*HISTO_WIDTH; i++)
+  // {
+    // ofs<<"gold "<<(uint32_t)gold_bins[i]<<";    kernel "<<(uint32_t)kernel_bins[i]<<std::endl;
+  // }
 
-  ofs.close();
+  // ofs.close();
 
     free(gold_bins);
     free(kernel_bins);
