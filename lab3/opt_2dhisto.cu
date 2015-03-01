@@ -248,10 +248,10 @@ extern "C" void opt_2dhisto(int size)
   test_xform xform;
   test_sumfun sum;
   //unsigned char zero = 0x00;
-  callHistogramKernel<histogram_atomic_add, 1>(d_Data, xform, sum, 0, size, 0U, &d_Histogram[0], HISTO_HEIGHT * HISTO_WIDTH, true);
+  callHistogramKernel<histogram_atomic_inc, 1>(d_Data, xform, sum, 0, size, 0U, &d_Histogram[0], HISTO_HEIGHT * HISTO_WIDTH, true);
   h_Histogram = new unsigned int[HISTO_HEIGHT * HISTO_WIDTH];
   cudaMemcpy(h_Histogram, d_Histogram, HISTO_HEIGHT * HISTO_WIDTH * sizeof(unsigned int), cudaMemcpyDeviceToHost);
-  cudaDeviceSynchronize();
+  //cudaDeviceSynchronize();
 }
 
 extern "C" void opt_free()
