@@ -5,6 +5,7 @@
 #include "util.h"
 #include "ref_2dhisto.h"
 
+
 #define H_ERROR_CHECKS      0
 
 #if H_ERROR_CHECKS
@@ -62,6 +63,10 @@ const int numActiveUpperLimit = 24;
 #define SMALL_BLOCK_SIZE        (1 << SMALL_BLOCK_SIZE_LOG2)
 #define MAX_SMALL_STEPS         2040
 
+static unsigned int* d_Data = NULL;
+static unsigned int* d_Histogram = NULL;
+static unsigned int* h_Histogram = NULL;
+
 
 #if __CUDA_ARCH__ >= 120
 #define USE_ATOMICS_HASH    0
@@ -88,8 +93,7 @@ const int numActiveUpperLimit = 24;
 #define __shared__
 #endif
 
-static unsigned int* d_Data = NULL;
-static unsigned int* d_Histogram = NULL;
+
 
 enum histogram_type {
   histogram_generic,        /*!< \brief Generic histogram, for any types */
@@ -223,6 +227,8 @@ void opt_2dhisto(int size)
   test_xform xform;
   test_sumfun sum;
   callHistogramKernel<histogram_atomic_add, 1>(d_Data, xform, sum, 0, size, 0U, d_Histogram, HISTO_HEIGHT * HISTO_WIDTH, true);
+  h_Histogram = new unsigned int[HISTO_HEIGHT * HISTO_WIDTH];
+  cudaMemcpy(h_Histogram, d_Histogram, HISTO_HEIGHT * HISTO_WIDTH * sizeof(unsigned int), cudaMemcpyDeviceToHost);
 }
 
 //extern "C"
@@ -235,8 +241,6 @@ void opt_free()
 //extern "C"
 void opt_copyFromDevice(unsigned char* output)
 {
-  unsigned int* h_Histogram = new unsigned int[HISTO_HEIGHT * HISTO_WIDTH];
-  cudaMemcpy(h_Histogram, d_Histogram, HISTO_HEIGHT * HISTO_WIDTH * sizeof(unsigned int), cudaMemcpyDeviceToHost);
   for(int i = 0;i<HISTO_HEIGHT * HISTO_WIDTH;++i)
   {
     output[i] = h_Histogram[i]>255?255:h_Histogram[i];
@@ -3812,4 +3816,5 @@ int getHistogramBufSize(OUTPUTTYPE zero, int nOut)
 #undef MEDIUM_BLOCK_SIZE
 #endif
 #undef USE_MEDIUM_PATH
+
 
