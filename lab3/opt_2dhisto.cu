@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <cutil.h>
+#include <fstream>
+//#include <cutil.h>
 #include "util.h"
 #include "ref_2dhisto.h"
 
@@ -93,9 +93,10 @@ static unsigned int* d_Data = NULL;
 static unsigned int* d_Histogram = NULL;
 
 enum histogram_type {
-  histogram_generic,   
-  histogram_atomic_inc,
-  histogram_atomic_add,
+  histogram_generic,        /*!< \brief Generic histogram, for any types */
+  histogram_atomic_inc,     /*!< \brief Each output-value is constant 1 */
+  histogram_atomic_add,     /*!< \brief Output-type is such that atomicAdd()
+                                        //function can be used */
 };
 
 
@@ -197,7 +198,8 @@ __global__ void computeHistogram(unsigned int  *buffer, int size, unsigned int *
 
 }
 
-extern "C" void opt_init(unsigned int** h_Data, int width, int height)
+//extern "C"
+void opt_init(unsigned int** h_Data, int width, int height)
 {
   cudaMalloc((void **)&d_Histogram, HISTO_HEIGHT * HISTO_WIDTH * sizeof(unsigned int));
   cudaMemset( d_Histogram, 0,HISTO_HEIGHT * HISTO_WIDTH * sizeof( unsigned int ));
@@ -215,21 +217,24 @@ extern "C" void opt_init(unsigned int** h_Data, int width, int height)
 }
 
 
-extern "C" void opt_2dhisto(int size)
+//extern "C"
+void opt_2dhisto(int size)
 {
 
   test_xform xform;
   test_sumfun sum;
-  callHistogramKernel<histogram_atomic_inc, 1>(d_Data, xform, sum, 0, size, 0U, d_Histogram, HISTO_HEIGHT * HISTO_WIDTH, true);
+  callHistogramKernel<histogram_atomic_add, 1>(d_Data, xform, sum, 0, size, 0U, d_Histogram, HISTO_HEIGHT * HISTO_WIDTH, true);
 }
 
-extern "C" void opt_free()
+//extern "C"
+void opt_free()
 {
   cudaFree(d_Histogram);
   cudaFree(d_Data);
 }
 
-extern "C"  void opt_copyFromDevice(unsigned char* output)
+//extern "C"
+void opt_copyFromDevice(unsigned char* output)
 {
   unsigned int* h_Histogram = new unsigned int[HISTO_HEIGHT * HISTO_WIDTH];
   cudaMemcpy(h_Histogram, d_Histogram, HISTO_HEIGHT * HISTO_WIDTH * sizeof(unsigned int), cudaMemcpyDeviceToHost);
