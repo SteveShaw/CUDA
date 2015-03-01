@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
 
 #include <cuda.h>
 #include <cutil.h>
@@ -114,6 +115,17 @@ int main(int argc, char* argv[])
         }
     }
     (passed) ? printf("\n    Test PASSED\n") : printf("\n    Test FAILED\n");
+	
+	
+	  std::ofstream ofs;
+  ofs.open ("output.txt", std::ofstream::out);
+
+  for (int i=0; i < HISTO_HEIGHT*HISTO_WIDTH; i++)
+  {
+    ofs<<"gold "<<(uint32_t)gold_bins[i]<<";    kernel "<<(uint32_t)kernel_bins[i]<<std::endl;
+  }
+
+  ofs.close();
 
     free(gold_bins);
     free(kernel_bins);
