@@ -5,6 +5,14 @@
 #include "util.h"
 #include "ref_2dhisto.h"
 
+
+/***Following code are adapted from https://github.com/trantalaiho/Cuda-Histogram and I makde the following modification
+
+1. Change the template parameters of function callHistogramKernel to acomodate unsigned char
+2. Modify the default block size to 256
+3. Minor modification for function callHistogramKernelImpl
+
+**/
 #define H_ERROR_CHECKS      0
 
 #if H_ERROR_CHECKS
@@ -240,9 +248,10 @@ extern "C" void opt_2dhisto(int size)
   test_xform xform;
   test_sumfun sum;
   //unsigned char zero = 0x00;
-  callHistogramKernel<histogram_atomic_inc, 1>(d_Data, xform, sum, 0, size, 0U, &d_Histogram[0], HISTO_HEIGHT * HISTO_WIDTH, true);
+  callHistogramKernel<histogram_atomic_add, 1>(d_Data, xform, sum, 0, size, 0U, &d_Histogram[0], HISTO_HEIGHT * HISTO_WIDTH, true);
   h_Histogram = new unsigned int[HISTO_HEIGHT * HISTO_WIDTH];
   cudaMemcpy(h_Histogram, d_Histogram, HISTO_HEIGHT * HISTO_WIDTH * sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  cudaDeviceSynchronize();
 }
 
 extern "C" void opt_free()
