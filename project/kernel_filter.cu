@@ -1,7 +1,5 @@
 texture<short, 2, cudaReadModeElementType> tex_inp;
 
-
-
 __device__ void swap(int *a, int *b)
 {
 	int temp = *a;
@@ -9,29 +7,11 @@ __device__ void swap(int *a, int *b)
 	*b = temp;
 }
 
-__device__ inline void compare(int* a, int* b)
-{
-	int temp;
-	if(*a > *b)
-	{
-		temp = *a;
-		*b = *a;
-		*a = temp;
-	}
-}
-
-#define min3(a,b,c) compare(a,b); compare(a,c);
-#define max3(a,b,c) compare(b,c); compare(a,c);
-#define minmax3(a,b,c) max3(a,b,c); compare(a,b);
-#define minmax4(a,b,c,d) compare(a,b);compare(c,d);compare(a,c);compare(b,d);
-#define minmax5(a,b,c,d,e) compare(a,b);compare(c,d);min3(a,c,e);max3(b,d,e);
-#define minmax6(a,b,c,d,e,f) compare(a,d);compare(b,e);compare(c,f);min3(a,b,c);max3(b,e,f);
-
 
 __global__ void kernel_median_w3(short* output, int width, int height)
 {
 	int j = __mul24(blockIdx.x,blockDim.x) + threadIdx.x;
-	int i = __mul24(blockIdx.y,blockDim.y)+threadIdx.y;
+	int i = __mul24(blockIdx.y,blockDim.y) + threadIdx.y;
 	int r0,r1,r2,r3,r4,r5,r6,r7,r8;
 	r0 = tex2D(tex_inp,j-1,i-1);
 	r1 = tex2D(tex_inp,j,i-1);
@@ -138,6 +118,18 @@ __global__ void kernel_filter(short* output, int width, int height, int r)
 	
 }
 
+__device__ inline void CompareAndSwap(int* a, int* b)
+{
+	int temp;
+	if(*a > *b)
+	{
+		temp = *a;
+		*b = *a;
+		*a = temp;
+	}
+}
+
+
 __global__ void kernel_median_w3minr(short* output, int width, int height)
 {
 	int j = __mul24(blockIdx.x,blockDim.x) + threadIdx.x;
@@ -150,12 +142,37 @@ __global__ void kernel_median_w3minr(short* output, int width, int height)
 	r3 = tex2D(tex_inp,j-1,i);
 	r4 = tex2D(tex_inp,j,i);
 	r5 = tex2D(tex_inp,j+1,i);
-	minmax6(&r0,&r1,&r2,&r3,&r4,&r5);
+
+	
+	CompareAndSwap(&r0,&r3);
+	CompareAndSwap(&r1,&r4);
+	CompareAndSwap(&r2,&r5);
+	CompareAndSwap(&r0,&r1);
+	CompareAndSwap(&r0,&r2);
+	CompareAndSwap(&r4,&r5);
+	CompareAndSwap(&r1,&r5);
+	
 	r5 = tex2D(tex_inp,j-1,i+1);
-	minmax5(&r1,&r2,&r3,&r4,&r5);
+
+	CompareAndSwap(&r1,&r2);
+	CompareAndSwap(&r3,&r4);
+	CompareAndSwap(&r1,&r3);
+	CompareAndSwap(&r1,&r5);
+	CompareAndSwap(&r4,&r5);
+	CompareAndSwap(&r2,&r5);
+	
 	r5 = tex2D(tex_inp,j,i+1);
-	minmax4(&r2,&r3,&r4,&r5);
+	CompareAndSwap(&r2,&r3);
+	CompareAndSwap(&r4,&r5);
+	CompareAndSwap(&r2,&r4);
+	CompareAndSwap(&r3,&r5);
+	
 	r5 = tex2D(tex_inp,j+1,i+1);
-	minmax3(&r3,&r4,&r5);
+
+	
+	CompareAndSwap(&r4,&r5);
+	CompareAndSwap(&r3,&r5);
+	CompareAndSwap(&r3,&r4);
+
 	output[__mul24(i,width)+j] = r4;
 }

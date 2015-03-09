@@ -3,13 +3,21 @@
 #include <iostream>
 #include "kernel_filter.cu"
 #include "util.h"
+
 void filter(dim3 block, dim3 grid, short*d_out, unsigned int W, unsigned int H, int r)
 {
 	kernel_filter<<<grid,block,0>>>(d_out,W,H,r);
 }
 int main(int argc, char** argv)
 {
-	std::string filename = "dst.pgm";
+	int option = 0;
+	
+	if(argc>1)
+	{
+		option = atoi(argv[1]);
+		std::cout<<"Option="<<option<<std::endl;
+	}
+	std::string filename = "noise.pgm";
 	short *h_in, *h_out, *d_out;
 
 	int size, bsx=16, bsy = 16;
@@ -47,11 +55,33 @@ int main(int argc, char** argv)
 	cutilCheckError(cutCreateTimer(&timer));
 	cutilCheckError(cutResetTimer(timer));
 	cutilCheckError(cutStartTimer(timer));
-	for(int count = 0;count<1000;++count)
+	if(option==0)
 	{
-		// kernel_filter<<<dimGrid,dimBlock,0>>>(d_out,W,H,3);
-		kernel_median_w3minr<<<dimGrid,dimBlock,0>>>(d_out,W,H);
+		for(int count = 0;count<1000;++count)
+		{
+			// kernel_filter<<<dimGrid,dimBlock,0>>>(d_out,W,H,3);
+			kernel_filter<<<dimGrid,dimBlock>>>(d_out,W,H,3);
+		}
 	}
+	
+	if(option==1)
+	{
+		for(int count = 0;count<1000;++count)
+		{
+			// kernel_filter<<<dimGrid,dimBlock,0>>>(d_out,W,H,3);
+			kernel_median_w3<<<dimGrid,dimBlock>>>(d_out,W,H);
+		}
+	}
+	
+	if(option==2)
+	{
+		for(int count = 0;count<1000;++count)
+		{
+			// kernel_filter<<<dimGrid,dimBlock,0>>>(d_out,W,H,3);
+			kernel_median_w3minr<<<dimGrid,dimBlock>>>(d_out,W,H);
+		}
+	}
+
 	cudaThreadSynchronize();
 	cutilCheckError(cutStopTimer(timer));
 	printf ("It takes about : %f ms to run,\n" , cutGetTimerValue ( timer ) /1000);
