@@ -59,7 +59,6 @@ int main(int argc, char** argv)
 	{
 		for(int count = 0;count<1000;++count)
 		{
-			// kernel_filter<<<dimGrid,dimBlock,0>>>(d_out,W,H,3);
 			kernel_filter<<<dimGrid,dimBlock>>>(d_out,W,H,3);
 		}
 	}
@@ -68,18 +67,26 @@ int main(int argc, char** argv)
 	{
 		for(int count = 0;count<1000;++count)
 		{
-			// kernel_filter<<<dimGrid,dimBlock,0>>>(d_out,W,H,3);
 			kernel_median_w3<<<dimGrid,dimBlock>>>(d_out,W,H);
 		}
 	}
 	
 	if(option==2)
 	{
+		dimGrid = dim3(W/dimBlock.x,H/dimBlock.y,1);
 		for(int count = 0;count<1000;++count)
 		{
-			// kernel_filter<<<dimGrid,dimBlock,0>>>(d_out,W,H,3);
 			kernel_median_w3minr<<<dimGrid,dimBlock>>>(d_out,W,H);
 		}
+	}
+	
+	if(option==3)
+	{
+		dimGrid = dim3(W/dimBlock.x/2,H/dimBlock.y,1);
+		for(int count = 0;count<1000;++count)
+		{
+			kernel_median_2pass<<<dimGrid,dimBlock>>>(d_out,W,H);
+		}		
 	}
 
 	cudaThreadSynchronize();
